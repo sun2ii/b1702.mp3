@@ -1,3 +1,5 @@
+import { FilePicker } from '@capawesome/capacitor-file-picker';
+import { AudioEngine } from '../native/audio-engine';
 import { createStore } from '../store-util';
 import { localSource } from './local-source';
 import { loadLibrary, resolveLibraryUri, saveLibrary } from './library-store';
@@ -54,6 +56,7 @@ export async function syncDrive() {
     if (!(await driveSource.isSignedIn())) await driveSource.signIn();
     libraryStore.set({ driveSignedIn: true });
 
+    await retryPendingUploads();
     const stubs = await driveSource.sync();
     const existing = libraryStore.get().tracks;
     const byId = new Map(existing.map((t) => [t.id, t]));
@@ -96,6 +99,73 @@ export async function importFromFiles() {
   } finally {
     libraryStore.set({ importing: false });
   }
+}
+
+/**
+ * Photos → video → M4A → library → Drive.
+ * The track is playable the moment the export finishes; the upload happens right after and,
+ * if it fails (no network), the track stays local with pendingUpload and Sync retries it.
+ */
+export async function importFromPhotos() {
+  libraryStore.set({ importing: true, lastError: null });
+  try {
+    const picked = await FilePicker.pickVideos({ limit: 0, skipTranscoding: true });
+    const errors: string[] = [];
+    for (const f of picked.files) {
+      if (!f.path) { errors.push(`${f.name}: no path returned by picker`); continue; }
+      try {
+        const title = recordingTitle(f.modifiedAt);
+        const { path } = await AudioEngine.exportAudio({ path: f.path, title });
+        const imported = await AudioEngine.importFile({ path });
+        let track: Track = { ...imported, sourceId: 'local', album: 'Phone Recordings', pendingUpload: true };
+        await upsert(track);
+
+        if (driveConfigured()) {
+          try {
+            if (!(await driveSource.isSignedIn())) await driveSource.signIn();
+            const uploaded = await driveSource.upload(track);
+            await replace(track.id, uploaded);
+            track = uploaded;
+          } catch (e) {
+            errors.push(`${title}: saved on phone, Drive upload failed (${(e as Error).message})`);
+          }
+        }
+      } catch (e) {
+        errors.push(`${f.name}: ${(e as Error).message}`);
+      }
+    }
+    if (errors.length) libraryStore.set({ lastError: errors.join('\n') });
+  } catch (e) {
+    const msg = (e as Error).message ?? String(e);
+    if (!/cancel/i.test(msg)) libraryStore.set({ lastError: msg });
+  } finally {
+    libraryStore.set({ importing: false });
+  }
+}
+
+/** Retry uploads that failed earlier. Called from syncDrive. */
+async function retryPendingUploads() {
+  for (const t of libraryStore.get().tracks.filter((t) => t.pendingUpload && t.fileName)) {
+    try { await replace(t.id, await driveSource.upload(t)); } catch { /* still pending; next sync */ }
+  }
+}
+
+function recordingTitle(modifiedAt?: number) {
+  const d = modifiedAt ? new Date(modifiedAt) : new Date();
+  const p = (n: number) => n.toString().padStart(2, '0');
+  return `Recording ${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}.${p(d.getMinutes())}`;
+}
+
+async function upsert(track: Track) {
+  const tracks = [...libraryStore.get().tracks.filter((t) => t.id !== track.id), track];
+  libraryStore.set({ tracks });
+  await saveLibrary(tracks);
+}
+
+async function replace(oldId: string, track: Track) {
+  const tracks = libraryStore.get().tracks.map((t) => (t.id === oldId ? track : t));
+  libraryStore.set({ tracks });
+  await saveLibrary(tracks);
 }
 
 export async function removeTracks(ids: string[]) {

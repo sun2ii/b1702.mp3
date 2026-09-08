@@ -13,6 +13,8 @@ export interface Track {
   remoteId?: string;
   /** Original file name on Drive (used as the download name). */
   remoteName?: string;
+  /** Recorded on the phone but not yet in Drive (offline / failed upload). Retried on Sync. */
+  pendingUpload?: boolean;
   title: string;
   artist: string;
   album: string;

@@ -22,3 +22,23 @@ enum Downloader {
         return dest
     }
 }
+
+/// Uploads a file from Library/Music to a URL (Drive resumable-upload session URI).
+/// URLSession reads straight from disk, so large files never sit in memory.
+enum Uploader {
+    static func upload(fileName: String, to url: URL, method: String, contentType: String,
+                       authorization: String?) async throws -> [String: Any] {
+        let file = AudioEngine.musicDir.appendingPathComponent(fileName)
+        var req = URLRequest(url: url)
+        req.httpMethod = method
+        req.setValue(contentType, forHTTPHeaderField: "Content-Type")
+        if let authorization { req.setValue(authorization, forHTTPHeaderField: "Authorization") }
+        let (data, resp) = try await URLSession.shared.upload(for: req, fromFile: file)
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? -1
+            throw NSError(domain: "Uploader", code: code,
+                          userInfo: [NSLocalizedDescriptionKey: "Upload failed (HTTP \(code))"])
+        }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+    }
+}

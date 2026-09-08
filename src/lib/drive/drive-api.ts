@@ -55,6 +55,22 @@ export async function listAudioFiles(rootId: string): Promise<DriveFile[]> {
   return files;
 }
 
+/**
+ * Drive "resumable upload", step 1 of 2: register name + parent folder, get back a session URI.
+ * Step 2 (the bytes) is done natively from disk — see AudioEngine.uploadFile.
+ */
+export async function createUploadSession(name: string, parentId: string, mimeType: string): Promise<string> {
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+    method: 'POST',
+    headers: { ...(await authHeader()), 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ name, parents: [parentId], mimeType }),
+  });
+  if (!res.ok) throw new Error(`Drive upload init failed (HTTP ${res.status})`);
+  const uri = res.headers.get('Location');
+  if (!uri) throw new Error('Drive did not return an upload session URI');
+  return uri;
+}
+
 export function downloadUrl(fileId: string) {
   return `${API}/files/${fileId}?alt=media`;
 }

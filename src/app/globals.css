@@ -39,6 +39,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .import-btn svg { width: 14px; height: 14px; fill: currentColor; vertical-align: -2px; }
 .header-actions { display: flex; gap: 6px; }
 .row .cloud svg { width: 18px; height: 18px; fill: var(--text-dim); }
+.row .cloud.pending svg { fill: var(--danger); }
+.import-btn { padding: 7px 10px; }
 .tabs { display: flex; gap: 6px; padding: 0 16px 10px; }
 .tab { flex: 1; padding: 8px 0; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-dim); background: var(--panel); border: 1px solid var(--line); }
 .tab.active { color: var(--bg); background: var(--accent); border-color: var(--accent); }

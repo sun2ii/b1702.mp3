@@ -15,6 +15,8 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "seek", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getState", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "downloadFile", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "uploadFile", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "exportAudio", returnType: CAPPluginReturnPromise),
     ]
 
     private let engine = AudioEngine()
@@ -52,6 +54,38 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(["path": dest.absoluteString])
             } catch {
                 call.reject(error.localizedDescription)
+            }
+        }
+    }
+
+    @objc func uploadFile(_ call: CAPPluginCall) {
+        guard let fileName = call.getString("fileName"),
+              let urlString = call.getString("url"), let url = URL(string: urlString) else {
+            call.reject("fileName and url are required"); return
+        }
+        let method = call.getString("method") ?? "PUT"
+        let contentType = call.getString("contentType") ?? "application/octet-stream"
+        let auth = call.getString("authorization")
+        Task {
+            do {
+                let json = try await Uploader.upload(fileName: fileName, to: url, method: method,
+                                                     contentType: contentType, authorization: auth)
+                call.resolve(json)
+            } catch {
+                call.reject(error.localizedDescription)
+            }
+        }
+    }
+
+    @objc func exportAudio(_ call: CAPPluginCall) {
+        guard let path = call.getString("path") else { call.reject("path is required"); return }
+        let title = call.getString("title") ?? "Recording"
+        Task {
+            do {
+                let dest = try await AudioExporter.exportAudio(from: path, title: title)
+                call.resolve(["path": dest.absoluteString])
+            } catch {
+                call.reject("Audio export failed: \(error.localizedDescription)")
             }
         }
     }

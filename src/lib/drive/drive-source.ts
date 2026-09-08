@@ -2,7 +2,7 @@ import { AudioEngine } from '../native/audio-engine';
 import { GoogleAuth } from '../native/google-auth';
 import type { MusicSource, Track } from '../library/types';
 import { DRIVE_CONFIG } from './config';
-import { downloadUrl, listAudioFiles, type DriveFile } from './drive-api';
+import { createUploadSession, downloadUrl, listAudioFiles, type DriveFile } from './drive-api';
 
 /**
  * Google Drive as a MusicSource.
@@ -35,6 +35,24 @@ export class GoogleDriveSource implements MusicSource {
   async sync(): Promise<Track[]> {
     const files = await listAudioFiles(DRIVE_CONFIG.rootFolderId);
     return files.map(toStub);
+  }
+
+  /** Push a local track's file into the Drive folder and return it re-homed as a Drive track. */
+  async upload(track: Track): Promise<Track> {
+    const mime = track.fileType === 'mp3' ? 'audio/mpeg' : 'audio/mp4';
+    const name = track.remoteName ?? track.fileName;
+    const sessionUri = await createUploadSession(name, DRIVE_CONFIG.rootFolderId, mime);
+    const { accessToken } = await GoogleAuth.getAccessToken();
+    const res = await AudioEngine.uploadFile({
+      fileName: track.fileName,
+      url: sessionUri,
+      method: 'PUT',
+      contentType: mime,
+      authorization: `Bearer ${accessToken}`,
+    });
+    const remoteId = String(res.id ?? '');
+    if (!remoteId) throw new Error('Drive upload returned no file id');
+    return { ...track, id: `gdrive:${remoteId}`, sourceId: this.id, remoteId, remoteName: name, pendingUpload: false };
   }
 
   async ensureLocal(track: Track): Promise<string> {

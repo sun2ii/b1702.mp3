@@ -5,7 +5,7 @@ import { artworkSrc, groupAlbums, groupArtists, sortSongs } from '@/lib/library/
 import type { Album, Artist, Track } from '@/lib/library/types';
 import { playTrack, playerStore } from '@/lib/player/player';
 import { useStore } from '@/lib/store-util';
-import { ChevronLeft, Cloud } from './Icons';
+import { ChevronLeft, Cloud, CloudOff } from './Icons';
 
 export type Tab = 'songs' | 'albums' | 'artists';
 
@@ -33,7 +33,9 @@ function TrackRow({ t, context, showNumber }: { t: Track; context: Track[]; show
       </div>
       {t.sourceId === 'gdrive' && !t.fileName
         ? <span className="cloud"><Cloud /></span>
-        : <span className="dur">{fmtTime(t.duration)}</span>}
+        : t.pendingUpload
+          ? <span className="cloud pending"><CloudOff /></span>
+          : <span className="dur">{fmtTime(t.duration)}</span>}
     </button>
   );
 }

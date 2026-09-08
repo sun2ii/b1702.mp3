@@ -25,6 +25,16 @@ export interface AudioEnginePlugin {
   getState(): Promise<EngineState>;
   /** Download to a temp file (streams to disk). Feed the result to importFile(). */
   downloadFile(opts: { url: string; authorization?: string; fileName: string }): Promise<{ path: string }>;
+  /** Upload a file from Library/Music (streams from disk). Returns the JSON response body. */
+  uploadFile(opts: {
+    fileName: string;
+    url: string;
+    method?: 'PUT' | 'POST';
+    contentType?: string;
+    authorization?: string;
+  }): Promise<Record<string, unknown>>;
+  /** Extract the audio track of a video into a temp .m4a (AAC). Feed the result to importFile(). */
+  exportAudio(opts: { path: string; title: string }): Promise<{ path: string }>;
 
   addListener(event: 'state', fn: (s: EngineState) => void): Promise<PluginListenerHandle>;
   addListener(event: 'ended', fn: () => void): Promise<PluginListenerHandle>;

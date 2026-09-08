@@ -7,8 +7,8 @@ export const DRIVE_CONFIG = {
   clientId: '909984931951-dutr29nj3ivkqs9pc6akhivavbpu32a4.apps.googleusercontent.com',
   /** The Drive folder that is the master music library ("winamp"). */
   rootFolderId: '1BGjBYLG0xvKN1GBTc0KzlHZK6jD-uZ0z',
-  /** Read-only: Drive is the master, the phone never writes to it. */
-  scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+  /** Full Drive scope: we read the library AND upload phone recordings into it. */
+  scopes: ['https://www.googleapis.com/auth/drive'],
 };
 
 export const driveConfigured = () => !DRIVE_CONFIG.clientId.startsWith('PASTE_');
