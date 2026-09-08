@@ -4,7 +4,7 @@
  */
 export const DRIVE_CONFIG = {
   /** OAuth client ID of type "iOS" from Google Cloud Console → Credentials. */
-  clientId: 'PASTE_YOUR_IOS_CLIENT_ID.apps.googleusercontent.com',
+  clientId: '909984931951-dutr29nj3ivkqs9pc6akhivavbpu32a4.apps.googleusercontent.com',
   /** The Drive folder that is the master music library ("winamp"). */
   rootFolderId: '1BGjBYLG0xvKN1GBTc0KzlHZK6jD-uZ0z',
   /** Read-only: Drive is the master, the phone never writes to it. */
