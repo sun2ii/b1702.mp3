@@ -1,7 +1,7 @@
 import { AudioEngine } from '../native/audio-engine';
 import type { MusicSource, Track } from '../library/types';
 import { DRIVE_CONFIG } from './config';
-import { accessToken, createUploadSession, downloadUrl, listAudioFiles, type DriveFile } from './drive-api';
+import { accessToken, createReuploadSession, createUploadSession, downloadUrl, listAudioFiles, renameFile, trashFile, type DriveFile } from './drive-api';
 
 /**
  * Google Drive as a MusicSource.
@@ -42,6 +42,26 @@ export class GoogleDriveSource implements MusicSource {
       ...track, id: `gdrive:${remoteId}`, sourceId: this.id, remoteId, remoteName: name,
       pendingUpload: false, uploadedAt: new Date().toISOString(),
     };
+  }
+
+  /** After an edit: rename on Drive and, if the local file's tags were rewritten, replace its bytes. */
+  async syncEdit(track: Track, bytesChanged: boolean): Promise<Track> {
+    if (!track.remoteId) return track;
+    const mime = track.fileType === 'mp3' ? 'audio/mpeg' : 'audio/mp4';
+    const name = `${track.title}.${track.fileType}`.replace(/[/:]/g, '-');
+    await renameFile(track.remoteId, name);
+    if (bytesChanged && track.fileName) {
+      const uri = await createReuploadSession(track.remoteId, mime);
+      await AudioEngine.uploadFile({
+        fileName: track.fileName, url: uri, method: 'PUT', contentType: mime,
+        authorization: `Bearer ${await accessToken()}`,
+      });
+    }
+    return { ...track, remoteName: name };
+  }
+
+  async trash(track: Track): Promise<void> {
+    if (track.remoteId) await trashFile(track.remoteId);
   }
 
   async ensureLocal(track: Track): Promise<string> {

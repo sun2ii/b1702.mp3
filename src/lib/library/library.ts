@@ -1,12 +1,12 @@
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { Preferences } from '@capacitor/preferences';
-import { askTrackInfo } from '../prompt';
+import { askDelete, askTrackInfo, type TrackInfo } from '../prompt';
 import { AudioEngine } from '../native/audio-engine';
 import { createStore } from '../store-util';
 import { localSource } from './local-source';
 import { installDefaultCover, loadLibrary, resolveLibraryUri, saveLibrary } from './library-store';
 import type { Track } from './types';
-import { initPlayer, removeFromQueue } from '../player/player';
+import { initPlayer, playerStore, removeFromQueue } from '../player/player';
 import { driveSource } from '../drive/drive-source';
 import { driveConfigured } from '../drive/config';
 
@@ -81,6 +81,14 @@ export async function importFromFiles() {
       const tracks = [...libraryStore.get().tracks, ...imported];
       libraryStore.set({ tracks });
       await saveLibrary(tracks);
+
+      // Drive is the master library: offer to push Files-app imports up too.
+      if (driveConfigured() && window.confirm(`Upload ${imported.length} file${imported.length > 1 ? 's' : ''} to Google Drive?`)) {
+        for (const t of imported) {
+          try { await replace(t.id, await driveSource.upload({ ...t, pendingUpload: true })); }
+          catch (e) { await replace(t.id, { ...t, pendingUpload: true }); errors.push(`${t.title}: upload failed (${(e as Error).message})`); }
+        }
+      }
     }
     if (errors.length) libraryStore.set({ lastError: errors.join('\n') });
   } catch (e) {
@@ -109,11 +117,12 @@ export async function importFromPhotos() {
       i++;
       if (!f.path) { errors.push(`${f.name}: no path returned by picker`); continue; }
       const recordedAt = new Date(f.modifiedAt ?? Date.now()).toISOString();
-      const info = await askTrackInfo(
+      const res = await askTrackInfo(
         picked.files.length > 1 ? `Name recording ${i} of ${picked.files.length}` : 'Name this recording',
         { title: recordingTitle(f.modifiedAt), artist: lastArtist, album: lastAlbum },
       );
-      if (!info) continue; // skipped
+      if (res.action !== 'save') continue; // skipped
+      const info = res.info;
       await Preferences.set({ key: 'last-artist', value: info.artist });
       await Preferences.set({ key: 'last-album', value: info.album });
       const title = info.title;
@@ -167,7 +176,87 @@ async function upsert(track: Track) {
 async function replace(oldId: string, track: Track) {
   const tracks = libraryStore.get().tracks.map((t) => (t.id === oldId ? track : t));
   libraryStore.set({ tracks });
+  // Keep the player's copy in step so Now Playing / mini-player reflect edits immediately.
+  const p = playerStore.get();
+  if (p.queue.some((t) => t.id === oldId)) {
+    playerStore.set({
+      queue: p.queue.map((t) => (t.id === oldId ? track : t)),
+      current: p.current?.id === oldId ? track : p.current,
+    });
+  }
   await saveLibrary(tracks);
+}
+
+// ---------- Edit / delete ----------
+
+/** Apply new tags (+ optional cover) to one track: index → file → Drive. */
+async function applyEdit(track: Track, info: TrackInfo, coverPath?: string): Promise<Track> {
+  let next: Track = { ...track, ...info };
+  let bytesChanged = false;
+  if (track.fileName) {
+    const r = await AudioEngine.retag({
+      fileName: track.fileName, ...info,
+      artworkSourcePath: coverPath, artworkFileName: track.artworkFileName,
+    });
+    bytesChanged = r.retagged;
+    if (r.artworkFileName) next.artworkFileName = r.artworkFileName;
+  }
+  await replace(track.id, next);
+  if (next.remoteId && driveConfigured()) {
+    try { next = await driveSource.syncEdit(next, bytesChanged); await replace(next.id, next); }
+    catch (e) { libraryStore.set({ lastError: `Saved on phone; Drive update failed (${(e as Error).message})` }); }
+  }
+  return next;
+}
+
+export async function editTrack(id: string) {
+  const track = libraryStore.get().tracks.find((t) => t.id === id);
+  if (!track) return;
+  const res = await askTrackInfo('Edit track', { title: track.title, artist: track.artist, album: track.album },
+    { allowCover: !!track.fileName, allowDelete: true });
+  if (res.action === 'cancel') return;
+  if (res.action === 'delete') { await deleteTrack(id); return; }
+  libraryStore.set({ importing: true, lastError: null });
+  try { await applyEdit(track, res.info, res.coverPath); }
+  catch (e) { libraryStore.set({ lastError: (e as Error).message }); }
+  finally { libraryStore.set({ importing: false }); }
+}
+
+/** Rename an album and/or set one cover for every track in it. */
+export async function editAlbum(albumKey: string, current: { title: string; artist: string }) {
+  const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+  const members = libraryStore.get().tracks.filter((t) => norm(t.album) === albumKey);
+  if (!members.length) return;
+  const res = await askTrackInfo('Edit album', { title: '', artist: current.artist, album: current.title },
+    { fields: ['album'], allowCover: members.some((t) => !!t.fileName) });
+  if (res.action !== 'save') return;
+  libraryStore.set({ importing: true, lastError: null });
+  try {
+    for (const t of members) {
+      await applyEdit(t, { title: t.title, artist: t.artist, album: res.info.album }, res.coverPath);
+    }
+  } catch (e) { libraryStore.set({ lastError: (e as Error).message }); }
+  finally { libraryStore.set({ importing: false }); }
+}
+
+export async function deleteTrack(id: string) {
+  const track = libraryStore.get().tracks.find((t) => t.id === id);
+  if (!track) return;
+  const choice = await askDelete(`Delete “${track.title}”?`, !!track.remoteId);
+  if (choice === 'cancel') return;
+  try {
+    await AudioEngine.deleteFiles({ fileName: track.fileName || undefined, artworkFileName: track.artworkFileName });
+    if (choice === 'everywhere') {
+      if (track.remoteId && driveConfigured()) await driveSource.trash(track);
+      await removeTracks([id]);
+    } else if (track.remoteId) {
+      // Back to a cloud stub: still listed, downloadable again on tap.
+      await replace(id, { ...track, fileName: '', artworkFileName: undefined, duration: track.duration });
+      removeFromQueue(new Set([id]));
+    } else {
+      await removeTracks([id]);
+    }
+  } catch (e) { libraryStore.set({ lastError: (e as Error).message }); }
 }
 
 export async function removeTracks(ids: string[]) {

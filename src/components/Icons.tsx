@@ -26,6 +26,9 @@ export const Cloud = () => (
 export const CloudOff = () => (
   <svg viewBox="0 0 24 24"><path d="M19.4 10a7 7 0 0 0-13.6-1.6A5 5 0 0 0 6 18h13a4 4 0 0 0 .4-8zM19 16H6a3 3 0 0 1 0-6h.8l.3-.9A5 5 0 0 1 17.5 10v1h1.5a2 2 0 0 1 0 4zM3 3l18 18-1.4 1.4L1.6 4.4z" /></svg>
 );
+export const More = () => (
+  <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+);
 export const ChevronLeft = () => (
   <svg viewBox="0 0 24 24"><path d="M14 7l-5 5 5 5z" /></svg>
 );

@@ -106,3 +106,12 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .import-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
 .np-meta { font-family: var(--font-lcd); font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 6px; letter-spacing: .04em; }
+.sheet-actions.column { flex-direction: column; align-items: stretch; }
+.sheet-actions.column .import-btn { padding: 12px; text-align: center; }
+.import-btn.danger { color: var(--danger); border-color: #4a2a2e; }
+.row .more { width: 36px; height: 36px; display: grid; place-items: center; color: var(--text-dim); border-radius: 999px; flex: none; }
+.row .more:active { background: var(--panel-2); }
+.search { margin: 0 16px 10px; display: flex; }
+.search input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; outline: none; -webkit-user-select: text; user-select: text; }
+.search input:focus { border-color: var(--accent-dim); }
+.section-head { display: flex; align-items: center; justify-content: space-between; padding-right: 6px; }

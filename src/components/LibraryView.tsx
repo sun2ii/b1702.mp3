@@ -5,7 +5,8 @@ import { artworkSrc, groupAlbums, groupArtists, sortSongs } from '@/lib/library/
 import type { Album, Artist, Track } from '@/lib/library/types';
 import { playTrack, playerStore } from '@/lib/player/player';
 import { useStore } from '@/lib/store-util';
-import { ChevronLeft, Cloud, CloudOff } from './Icons';
+import { ChevronLeft, Cloud, CloudOff, More } from './Icons';
+import { editAlbum, editTrack } from '@/lib/library/library';
 
 export type Tab = 'songs' | 'albums' | 'artists';
 
@@ -36,14 +37,22 @@ function TrackRow({ t, context, showNumber }: { t: Track; context: Track[]; show
         : t.pendingUpload
           ? <span className="cloud pending"><CloudOff /></span>
           : <span className="dur">{fmtTime(t.duration)}</span>}
+      <span className="more" onClick={(e) => { e.stopPropagation(); void editTrack(t.id); }}><More /></span>
     </button>
   );
 }
 
-export function LibraryView({ tracks, tab }: { tracks: Track[]; tab: Tab }) {
+function matches(t: Track, q: string) {
+  if (!q) return true;
+  const n = q.toLowerCase();
+  return t.title.toLowerCase().includes(n) || t.artist.toLowerCase().includes(n) || t.album.toLowerCase().includes(n);
+}
+
+export function LibraryView({ tracks: all, tab, query = '' }: { tracks: Track[]; tab: Tab; query?: string }) {
   const [album, setAlbum] = useState<Album | null>(null);
   const [artist, setArtist] = useState<Artist | null>(null);
 
+  const tracks = useMemo(() => all.filter((t) => matches(t, query.trim())), [all, query]);
   const songs = useMemo(() => sortSongs(tracks), [tracks]);
   const albums = useMemo(() => groupAlbums(tracks), [tracks]);
   const artists = useMemo(() => groupArtists(tracks), [tracks]);
@@ -55,7 +64,10 @@ export function LibraryView({ tracks, tab }: { tracks: Track[]; tab: Tab }) {
     return (
       <div className="scroll">
         <button className="back" onClick={() => setAlbum(null)}><ChevronLeft /> {artist ? artist.name : 'Albums'}</button>
-        <div className="section-title">{live.title}</div>
+        <div className="section-head">
+          <div className="section-title">{live.title}</div>
+          <span className="more" onClick={() => void editAlbum(live.key, { title: live.title, artist: live.artist })}><More /></span>
+        </div>
         <div className="section-sub">{live.artist} · {live.tracks.length} tracks</div>
         {live.tracks.map((t) => <TrackRow key={t.id} t={t} context={live.tracks} showNumber />)}
       </div>

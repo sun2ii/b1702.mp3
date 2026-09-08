@@ -36,6 +36,13 @@ export interface AudioEnginePlugin {
   /** Extract the audio track of a video into a temp .m4a (AAC). Feed the result to importFile(). */
   exportAudio(opts: { path: string; title: string; artist?: string; album?: string; recordedAt?: string }): Promise<{ path: string }>;
 
+  /** Rewrite tags (+ optional new cover from an image path). M4A files are re-tagged in place; MP3 = index only. */
+  retag(opts: {
+    fileName: string; title: string; artist: string; album: string;
+    artworkSourcePath?: string; artworkFileName?: string;
+  }): Promise<{ retagged: boolean; artworkFileName?: string }>;
+  deleteFiles(opts: { fileName?: string; artworkFileName?: string }): Promise<void>;
+
   addListener(event: 'state', fn: (s: EngineState) => void): Promise<PluginListenerHandle>;
   addListener(event: 'ended', fn: () => void): Promise<PluginListenerHandle>;
   addListener(

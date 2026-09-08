@@ -83,6 +83,38 @@ export async function createUploadSession(name: string, parentId: string, mimeTy
   return uri;
 }
 
+export async function renameFile(fileId: string, name: string): Promise<void> {
+  const res = await fetch(`${API}/files/${fileId}`, {
+    method: 'PATCH',
+    headers: { ...(await authHeader()), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error(`Drive rename failed (HTTP ${res.status})`);
+}
+
+/** Soft delete: the file goes to Drive's trash (recoverable for 30 days). */
+export async function trashFile(fileId: string): Promise<void> {
+  const res = await fetch(`${API}/files/${fileId}`, {
+    method: 'PATCH',
+    headers: { ...(await authHeader()), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ trashed: true }),
+  });
+  if (!res.ok) throw new Error(`Drive delete failed (HTTP ${res.status})`);
+}
+
+/** Resumable session for replacing an existing file's bytes (after a re-tag). */
+export async function createReuploadSession(fileId: string, mimeType: string): Promise<string> {
+  const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=resumable`, {
+    method: 'PATCH',
+    headers: { ...(await authHeader()), 'Content-Type': 'application/json; charset=UTF-8' },
+    body: JSON.stringify({ mimeType }),
+  });
+  if (!res.ok) throw new Error(`Drive re-upload init failed (HTTP ${res.status})`);
+  const uri = res.headers.get('Location');
+  if (!uri) throw new Error('Drive did not return an upload session URI');
+  return uri;
+}
+
 export function downloadUrl(fileId: string) {
   return `${API}/files/${fileId}?alt=media`;
 }

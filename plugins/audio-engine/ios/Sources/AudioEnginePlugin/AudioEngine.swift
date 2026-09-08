@@ -59,6 +59,13 @@ final class AudioEngine {
     func setup() {
         try? FileManager.default.createDirectory(at: Self.musicDir, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: Self.artworkDir, withIntermediateDirectories: true)
+        // Drive is the master copy; the phone is a cache. Keep the cache out of iCloud backups.
+        for dir in [Self.musicDir, Self.artworkDir] {
+            var u = dir
+            var rv = URLResourceValues()
+            rv.isExcludedFromBackup = true
+            try? u.setResourceValues(rv)
+        }
 
         // (1) Audio session: `.playback` is what tells iOS "this app is a music player";
         //     combined with the `audio` UIBackgroundMode it keeps us alive when locked.

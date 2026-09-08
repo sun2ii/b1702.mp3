@@ -17,6 +17,8 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "downloadFile", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "uploadFile", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "exportAudio", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "retag", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deleteFiles", returnType: CAPPluginReturnPromise),
     ]
 
     private let engine = AudioEngine()
@@ -91,6 +93,30 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
                 call.reject("Audio export failed: \(error.localizedDescription)")
             }
         }
+    }
+
+    @objc func retag(_ call: CAPPluginCall) {
+        guard let fileName = call.getString("fileName") else { call.reject("fileName is required"); return }
+        Task {
+            do {
+                let r = try await Retagger.retag(
+                    fileName: fileName,
+                    title: call.getString("title") ?? "", artist: call.getString("artist") ?? "",
+                    album: call.getString("album") ?? "",
+                    artworkSourcePath: call.getString("artworkSourcePath"),
+                    artworkFileName: call.getString("artworkFileName"))
+                var out: [String: Any] = ["retagged": r.retagged]
+                if let a = r.artworkFileName { out["artworkFileName"] = a }
+                call.resolve(out)
+            } catch {
+                call.reject("Tag update failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @objc func deleteFiles(_ call: CAPPluginCall) {
+        Retagger.deleteFiles(fileName: call.getString("fileName"), artworkFileName: call.getString("artworkFileName"))
+        call.resolve()
     }
 
     @objc func loadTrack(_ call: CAPPluginCall) {

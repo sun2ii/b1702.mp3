@@ -6,12 +6,13 @@ import { Cloud } from '@/components/Icons';
 import { useStore } from '@/lib/store-util';
 import { LibraryView, type Tab } from '@/components/LibraryView';
 import { MiniPlayer, NowPlaying } from '@/components/Player';
-import { NameSheet } from '@/components/NameSheet';
+import { Sheets } from '@/components/Sheets';
 
 export default function Home() {
   const lib = useStore(libraryStore);
   const [tab, setTab] = useState<Tab>('songs');
   const [showNowPlaying, setShowNowPlaying] = useState(false);
+  const [query, setQuery] = useState('');
 
   // All Capacitor access happens after mount: the static export is prerendered at build
   // time in Node, where no bridge exists.
@@ -42,7 +43,13 @@ export default function Home() {
         ))}
       </nav>
 
-      {lib.lastError && <div className="error">{lib.lastError}</div>}
+      {lib.tracks.length > 0 && (
+        <div className="search">
+          <input type="search" placeholder="Search songs, artists, albums" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+      )}
+
+      {lib.lastError && <div className="error" onClick={() => libraryStore.set({ lastError: null })}>{lib.lastError}</div>}
 
       {lib.ready && lib.tracks.length === 0 ? (
         <div className="empty">
@@ -50,12 +57,12 @@ export default function Home() {
           <b>Sync</b> pulls in your Google Drive library.<br /><b>+ Video</b> turns a Photos video into a track and uploads it.<br /><b>+ Files</b> imports MP3/M4A from the Files app.
         </div>
       ) : (
-        <LibraryView key={tab} tracks={lib.tracks} tab={tab} />
+        <LibraryView key={tab} tracks={lib.tracks} tab={tab} query={query} />
       )}
 
       <MiniPlayer onOpen={() => setShowNowPlaying(true)} />
       {showNowPlaying && <NowPlaying onClose={() => setShowNowPlaying(false)} />}
-      <NameSheet />
+      <Sheets />
     </div>
   );
 }
