@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+# Capacitor iOS: generated, but keep it in git once you customize signing/Info.plist
+ios/App/Pods/
+ios/App/build/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/
+ios/App/CapApp-SPM/.build/
+ios/App/public/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml

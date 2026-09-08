@@ -1,0 +1,10 @@
+{
+  "name": "winamp-audio-engine",
+  "version": "0.1.0",
+  "description": "Native iOS audio engine for Winamp: AVPlayer + background audio + Lock Screen controls + tag import",
+  "main": "index.js",
+  "license": "MIT",
+  "capacitor": {
+    "ios": { "src": "ios" }
+  }
+}
