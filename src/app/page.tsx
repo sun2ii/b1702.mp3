@@ -22,7 +22,7 @@ export default function Home() {
         <span className="brand">Winamp</span>
         <div className="header-actions">
           <button className="import-btn" disabled={lib.driveSyncing} onClick={() => void syncDrive()}>
-            <Cloud /> {lib.driveSyncing ? 'Syncing…' : lib.driveSignedIn ? 'Sync' : 'Drive'}
+            <Cloud /> {lib.driveSyncing ? 'Syncing…' : 'Sync'}
           </button>
           <button className="import-btn" disabled={lib.importing} onClick={() => void importFromPhotos()}>
             {lib.importing ? '…' : '+ Video'}
@@ -46,7 +46,7 @@ export default function Home() {
       {lib.ready && lib.tracks.length === 0 ? (
         <div className="empty">
           <span className="brand">Library empty</span>
-          <b>Drive</b> syncs your Google Drive library.<br /><b>+ Video</b> turns a Photos video into a track and uploads it.<br /><b>+ Files</b> imports MP3/M4A from the Files app.
+          <b>Sync</b> pulls in your Google Drive library.<br /><b>+ Video</b> turns a Photos video into a track and uploads it.<br /><b>+ Files</b> imports MP3/M4A from the Files app.
         </div>
       ) : (
         <LibraryView key={tab} tracks={lib.tracks} tab={tab} />

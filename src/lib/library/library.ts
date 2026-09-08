@@ -13,7 +13,6 @@ export interface LibraryState {
   ready: boolean;
   importing: boolean;
   lastError: string | null;
-  driveSignedIn: boolean;
   driveSyncing: boolean;
 }
 
@@ -22,7 +21,6 @@ export const libraryStore = createStore<LibraryState>({
   ready: false,
   importing: false,
   lastError: null,
-  driveSignedIn: false,
   driveSyncing: false,
 });
 
@@ -38,24 +36,17 @@ export async function bootLibrary() {
     libraryStore.set({ tracks: next });
     await saveLibrary(next);
   };
-  if (driveConfigured()) {
-    try { libraryStore.set({ driveSignedIn: await driveSource.isSignedIn() }); } catch { /* plugin missing */ }
-  }
-
   await initPlayer(tracks);
 }
 
 /** Sign in (if needed) and merge the Drive folder into the library. Never removes cached files. */
 export async function syncDrive() {
   if (!driveConfigured()) {
-    libraryStore.set({ lastError: 'Google Drive is not configured: paste your client ID in src/lib/drive/config.ts' });
+    libraryStore.set({ lastError: 'Google Drive is not configured: add src/lib/drive/service-account.json' });
     return;
   }
   libraryStore.set({ driveSyncing: true, lastError: null });
   try {
-    if (!(await driveSource.isSignedIn())) await driveSource.signIn();
-    libraryStore.set({ driveSignedIn: true });
-
     await retryPendingUploads();
     const stubs = await driveSource.sync();
     const existing = libraryStore.get().tracks;
@@ -77,10 +68,7 @@ export async function syncDrive() {
   }
 }
 
-export async function signOutDrive() {
-  await driveSource.signOut();
-  libraryStore.set({ driveSignedIn: false });
-}
+
 
 export async function importFromFiles() {
   libraryStore.set({ importing: true, lastError: null });
@@ -122,7 +110,6 @@ export async function importFromPhotos() {
 
         if (driveConfigured()) {
           try {
-            if (!(await driveSource.isSignedIn())) await driveSource.signIn();
             const uploaded = await driveSource.upload(track);
             await replace(track.id, uploaded);
             track = uploaded;

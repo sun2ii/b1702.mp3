@@ -15,3 +15,6 @@ ios/App/public/
 ios/App/App/public/
 ios/App/App/capacitor.config.json
 ios/App/App/config.xml
+
+# Google service-account key (private key inside) — never commit
+src/lib/drive/service-account.json

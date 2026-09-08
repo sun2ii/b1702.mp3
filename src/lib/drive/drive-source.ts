@@ -1,8 +1,7 @@
 import { AudioEngine } from '../native/audio-engine';
-import { GoogleAuth } from '../native/google-auth';
 import type { MusicSource, Track } from '../library/types';
 import { DRIVE_CONFIG } from './config';
-import { createUploadSession, downloadUrl, listAudioFiles, type DriveFile } from './drive-api';
+import { accessToken, createUploadSession, downloadUrl, listAudioFiles, type DriveFile } from './drive-api';
 
 /**
  * Google Drive as a MusicSource.
@@ -19,18 +18,6 @@ export class GoogleDriveSource implements MusicSource {
   /** Set by the library so a freshly cached track's tags/artwork get saved. */
   onCached: (updated: Track) => Promise<void> = async () => {};
 
-  async signIn() {
-    await GoogleAuth.signIn({ clientId: DRIVE_CONFIG.clientId, scopes: DRIVE_CONFIG.scopes });
-  }
-
-  async isSignedIn() {
-    return (await GoogleAuth.isSignedIn()).signedIn;
-  }
-
-  async signOut() {
-    await GoogleAuth.signOut();
-  }
-
   /** Build stub tracks for every audio file in the root folder. Metadata is guessed from folders. */
   async sync(): Promise<Track[]> {
     const files = await listAudioFiles(DRIVE_CONFIG.rootFolderId);
@@ -42,13 +29,12 @@ export class GoogleDriveSource implements MusicSource {
     const mime = track.fileType === 'mp3' ? 'audio/mpeg' : 'audio/mp4';
     const name = track.remoteName ?? track.fileName;
     const sessionUri = await createUploadSession(name, DRIVE_CONFIG.rootFolderId, mime);
-    const { accessToken } = await GoogleAuth.getAccessToken();
     const res = await AudioEngine.uploadFile({
       fileName: track.fileName,
       url: sessionUri,
       method: 'PUT',
       contentType: mime,
-      authorization: `Bearer ${accessToken}`,
+      authorization: `Bearer ${await accessToken()}`,
     });
     const remoteId = String(res.id ?? '');
     if (!remoteId) throw new Error('Drive upload returned no file id');
@@ -59,10 +45,9 @@ export class GoogleDriveSource implements MusicSource {
     if (track.fileName) return track.fileName; // already cached
     if (!track.remoteId) throw new Error('Drive track has no remoteId');
 
-    const { accessToken } = await GoogleAuth.getAccessToken();
     const { path } = await AudioEngine.downloadFile({
       url: downloadUrl(track.remoteId),
-      authorization: `Bearer ${accessToken}`,
+      authorization: `Bearer ${await accessToken()}`,
       fileName: track.remoteName ?? `${track.title}.${track.fileType || 'mp3'}`,
     });
     const imported = await AudioEngine.importFile({ path });

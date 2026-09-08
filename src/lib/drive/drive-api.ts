@@ -1,4 +1,5 @@
 import { GoogleAuth } from '../native/google-auth';
+import { DRIVE_CONFIG } from './config';
 
 /**
  * The tiny slice of the Drive v3 REST API we need. Calls go straight from the WebView to
@@ -18,9 +19,19 @@ const API = 'https://www.googleapis.com/drive/v3';
 const FOLDER = 'application/vnd.google-apps.folder';
 const AUDIO_EXT = /\.(mp3|m4a|aac|wav|aiff?|flac|alac)$/i;
 
+/** One place that knows how to get a token. Everything else just asks for a header. */
+export async function accessToken(): Promise<string> {
+  const { accessToken } = await GoogleAuth.getAccessToken({
+    clientEmail: DRIVE_CONFIG.clientEmail,
+    privateKey: DRIVE_CONFIG.privateKey,
+    subject: DRIVE_CONFIG.impersonate,
+    scopes: DRIVE_CONFIG.scopes,
+  });
+  return accessToken;
+}
+
 async function authHeader() {
-  const { accessToken } = await GoogleAuth.getAccessToken();
-  return { Authorization: `Bearer ${accessToken}` };
+  return { Authorization: `Bearer ${await accessToken()}` };
 }
 
 async function listChildren(folderId: string): Promise<Omit<DriveFile, 'pathParts'>[]> {
