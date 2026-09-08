@@ -1,4 +1,6 @@
 import { FilePicker } from '@capawesome/capacitor-file-picker';
+import { Preferences } from '@capacitor/preferences';
+import { askTrackInfo } from '../prompt';
 import { AudioEngine } from '../native/audio-engine';
 import { createStore } from '../store-util';
 import { localSource } from './local-source';
@@ -99,13 +101,25 @@ export async function importFromPhotos() {
   try {
     const picked = await FilePicker.pickVideos({ limit: 0, skipTranscoding: true });
     const errors: string[] = [];
+    const lastArtist = (await Preferences.get({ key: 'last-artist' })).value ?? '';
+    const lastAlbum = (await Preferences.get({ key: 'last-album' })).value ?? 'Phone Recordings';
+    let i = 0;
     for (const f of picked.files) {
+      i++;
       if (!f.path) { errors.push(`${f.name}: no path returned by picker`); continue; }
+      const recordedAt = new Date(f.modifiedAt ?? Date.now()).toISOString();
+      const info = await askTrackInfo(
+        picked.files.length > 1 ? `Name recording ${i} of ${picked.files.length}` : 'Name this recording',
+        { title: recordingTitle(f.modifiedAt), artist: lastArtist, album: lastAlbum },
+      );
+      if (!info) continue; // skipped
+      await Preferences.set({ key: 'last-artist', value: info.artist });
+      await Preferences.set({ key: 'last-album', value: info.album });
+      const title = info.title;
       try {
-        const title = recordingTitle(f.modifiedAt);
-        const { path } = await AudioEngine.exportAudio({ path: f.path, title });
+        const { path } = await AudioEngine.exportAudio({ path: f.path, ...info, recordedAt });
         const imported = await AudioEngine.importFile({ path });
-        let track: Track = { ...imported, sourceId: 'local', album: 'Phone Recordings', pendingUpload: true };
+        let track: Track = { ...imported, ...info, sourceId: 'local', recordedAt, pendingUpload: true };
         await upsert(track);
 
         if (driveConfigured()) {

@@ -38,7 +38,10 @@ export class GoogleDriveSource implements MusicSource {
     });
     const remoteId = String(res.id ?? '');
     if (!remoteId) throw new Error('Drive upload returned no file id');
-    return { ...track, id: `gdrive:${remoteId}`, sourceId: this.id, remoteId, remoteName: name, pendingUpload: false };
+    return {
+      ...track, id: `gdrive:${remoteId}`, sourceId: this.id, remoteId, remoteName: name,
+      pendingUpload: false, uploadedAt: new Date().toISOString(),
+    };
   }
 
   async ensureLocal(track: Track): Promise<string> {
@@ -60,6 +63,8 @@ export class GoogleDriveSource implements MusicSource {
       sourceId: this.id,
       remoteId: track.remoteId,
       remoteName: track.remoteName,
+      uploadedAt: track.uploadedAt,
+      recordedAt: imported.recordedAt ?? track.recordedAt,
       artist: imported.artist === 'Unknown Artist' ? track.artist : imported.artist,
       album: imported.album === 'Unknown Album' ? track.album : imported.album,
     };
@@ -83,7 +88,8 @@ function toStub(f: DriveFile): Track {
     album: f.pathParts.length >= 2 ? b : a ?? 'Unknown Album',
     duration: 0,
     fileType: ext,
-    addedAt: f.modifiedTime ?? new Date().toISOString(),
+    addedAt: f.createdTime ?? f.modifiedTime ?? new Date().toISOString(),
+    uploadedAt: f.createdTime,
   };
 }
 

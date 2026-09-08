@@ -34,7 +34,7 @@ export interface AudioEnginePlugin {
     authorization?: string;
   }): Promise<Record<string, unknown>>;
   /** Extract the audio track of a video into a temp .m4a (AAC). Feed the result to importFile(). */
-  exportAudio(opts: { path: string; title: string }): Promise<{ path: string }>;
+  exportAudio(opts: { path: string; title: string; artist?: string; album?: string; recordedAt?: string }): Promise<{ path: string }>;
 
   addListener(event: 'state', fn: (s: EngineState) => void): Promise<PluginListenerHandle>;
   addListener(event: 'ended', fn: () => void): Promise<PluginListenerHandle>;

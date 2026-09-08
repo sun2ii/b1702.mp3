@@ -11,6 +11,7 @@ export interface DriveFile {
   mimeType: string;
   size?: string;
   modifiedTime?: string;
+  createdTime?: string;
   /** Folder names from the root down to this file's parent, e.g. ["Daft Punk", "Discovery"]. */
   pathParts: string[];
 }
@@ -40,7 +41,7 @@ async function listChildren(folderId: string): Promise<Omit<DriveFile, 'pathPart
   do {
     const params = new URLSearchParams({
       q: `'${folderId}' in parents and trashed = false`,
-      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime)',
+      fields: 'nextPageToken, files(id, name, mimeType, size, modifiedTime, createdTime)',
       pageSize: '1000',
       ...(pageToken ? { pageToken } : {}),
     });

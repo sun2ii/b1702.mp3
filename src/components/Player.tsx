@@ -7,6 +7,25 @@ import { useStore } from '@/lib/store-util';
 import { ChevronDown, Next, Pause, Play, Prev, Repeat, Shuffle } from './Icons';
 import { fmtTime } from './LibraryView';
 
+function fmtDate(iso?: string) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/** "REC Sep 8, 2026 · DRIVE Sep 8, 2026 · M4A" — what you'd want to glance at on an LCD. */
+function metaLine(t: { recordedAt?: string; uploadedAt?: string; pendingUpload?: boolean; sourceId: string; fileName: string }) {
+  const parts: string[] = [];
+  const r = fmtDate(t.recordedAt);
+  const u = fmtDate(t.uploadedAt);
+  if (r) parts.push(`REC ${r}`);
+  if (u) parts.push(`DRIVE ${u}`);
+  else if (t.pendingUpload) parts.push('DRIVE pending');
+  else if (t.sourceId === 'local') parts.push('LOCAL only');
+  if (t.sourceId === 'gdrive' && !t.fileName) parts.push('not downloaded');
+  return parts.join(' · ');
+}
+
 /** Persistent bar at the bottom of the library. Tap it to open Now Playing. */
 export function MiniPlayer({ onOpen }: { onOpen: () => void }) {
   const p = useStore(playerStore);
@@ -54,6 +73,7 @@ export function NowPlaying({ onClose }: { onClose: () => void }) {
 
       <div className="np-title">{p.current.title}</div>
       <div className="np-artist">{p.current.artist} — {p.current.album}</div>
+      <div className="np-meta">{metaLine(p.current)}</div>
 
       <div className="lcd">
         <span>{fmtTime(pos)}</span>

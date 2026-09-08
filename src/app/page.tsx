@@ -6,6 +6,7 @@ import { Cloud } from '@/components/Icons';
 import { useStore } from '@/lib/store-util';
 import { LibraryView, type Tab } from '@/components/LibraryView';
 import { MiniPlayer, NowPlaying } from '@/components/Player';
+import { NameSheet } from '@/components/NameSheet';
 
 export default function Home() {
   const lib = useStore(libraryStore);
@@ -54,6 +55,7 @@ export default function Home() {
 
       <MiniPlayer onOpen={() => setShowNowPlaying(true)} />
       {showNowPlaying && <NowPlaying onClose={() => setShowNowPlaying(false)} />}
+      <NameSheet />
     </div>
   );
 }

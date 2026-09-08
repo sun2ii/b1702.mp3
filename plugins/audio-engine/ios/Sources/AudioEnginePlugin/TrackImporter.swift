@@ -70,6 +70,7 @@ enum TrackImporter {
             if let v = await string(common, .commonIdentifierAlbumName), !v.isEmpty { result["album"] = v }
 
             if let track = await trackNumber(all) { result["trackNumber"] = track }
+            if let v = await string(common, .commonIdentifierCreationDate), !v.isEmpty { result["recordedAt"] = v }
 
             if let artItem = AVMetadataItem.metadataItems(from: common, filteredByIdentifier: .commonIdentifierArtwork).first,
                let data = try? await artItem.load(.dataValue),

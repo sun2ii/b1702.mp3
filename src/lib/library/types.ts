@@ -22,7 +22,11 @@ export interface Track {
   duration: number; // seconds
   artworkFileName?: string;
   fileType: string; // "mp3" | "m4a" | ...
-  addedAt: string; // ISO date
+  addedAt: string; // ISO date, when it entered this phone's library
+  /** When the source video/audio was recorded (from the file's date), ISO. */
+  recordedAt?: string;
+  /** When it landed in Drive (upload finished, or Drive's createdTime for synced files), ISO. */
+  uploadedAt?: string;
 }
 
 /**

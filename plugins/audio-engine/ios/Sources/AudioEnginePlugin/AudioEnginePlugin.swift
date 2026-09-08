@@ -82,7 +82,10 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
         let title = call.getString("title") ?? "Recording"
         Task {
             do {
-                let dest = try await AudioExporter.exportAudio(from: path, title: title)
+                let dest = try await AudioExporter.exportAudio(
+                    from: path, title: title,
+                    artist: call.getString("artist"), album: call.getString("album"),
+                    recordedAt: call.getString("recordedAt"))
                 call.resolve(["path": dest.absoluteString])
             } catch {
                 call.reject("Audio export failed: \(error.localizedDescription)")

@@ -94,3 +94,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .transport .mode.on { color: var(--accent); }
 .transport .mode { color: var(--text-dim); position: relative; }
 .transport .mode .badge { position: absolute; bottom: 6px; right: 8px; font-size: 9px; font-family: var(--font-lcd); font-weight: 700; }
+
+/* ---- Name sheet ---- */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; z-index: 30; }
+.sheet { width: 100%; background: var(--panel-2); border-radius: 16px 16px 0 0; padding: 18px 18px calc(var(--safe-bottom) + 18px); border-top: 1px solid var(--line); }
+.sheet-title { font-family: var(--font-lcd); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.field { display: block; margin-bottom: 10px; }
+.field span { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+.field input { width: 100%; font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; outline: none; -webkit-user-select: text; user-select: text; }
+.field input:focus { border-color: var(--accent-dim); }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.import-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+.np-meta { font-family: var(--font-lcd); font-size: 11px; color: var(--text-dim); text-align: center; margin-top: 6px; letter-spacing: .04em; }
