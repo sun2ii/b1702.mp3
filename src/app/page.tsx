@@ -7,21 +7,24 @@ import { useStore } from '@/lib/store-util';
 import { LibraryView, type Tab } from '@/components/LibraryView';
 import { MiniPlayer, NowPlaying } from '@/components/Player';
 import { Sheets } from '@/components/Sheets';
+import { SkinPicker } from '@/components/SkinPicker';
+import { loadSkin } from '@/lib/skins';
 
 export default function Home() {
   const lib = useStore(libraryStore);
   const [tab, setTab] = useState<Tab>('songs');
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const [query, setQuery] = useState('');
+  const [showSkins, setShowSkins] = useState(false);
 
   // All Capacitor access happens after mount: the static export is prerendered at build
   // time in Node, where no bridge exists.
-  useEffect(() => { void bootLibrary(); }, []);
+  useEffect(() => { void loadSkin(); void bootLibrary(); }, []);
 
   return (
     <div className="app">
       <header className="header">
-        <span className="brand">Winamp</span>
+        <button className="brand brand-btn" onClick={() => setShowSkins(true)}>Winamp ▾</button>
         <div className="header-actions">
           <button className="import-btn" disabled={lib.driveSyncing} onClick={() => void syncDrive()}>
             <Cloud /> {lib.driveSyncing ? 'Syncing…' : 'Sync'}
@@ -62,6 +65,7 @@ export default function Home() {
 
       <MiniPlayer onOpen={() => setShowNowPlaying(true)} />
       {showNowPlaying && <NowPlaying onClose={() => setShowNowPlaying(false)} />}
+      {showSkins && <SkinPicker onClose={() => setShowSkins(false)} />}
       <Sheets />
     </div>
   );

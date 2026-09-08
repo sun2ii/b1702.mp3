@@ -115,3 +115,11 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .search input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; outline: none; -webkit-user-select: text; user-select: text; }
 .search input:focus { border-color: var(--accent-dim); }
 .section-head { display: flex; align-items: center; justify-content: space-between; padding-right: 6px; }
+
+/* ---- Skin picker ---- */
+.skins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+.skin { border: 2px solid; border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.skin .swatch { display: flex; gap: 4px; padding: 6px; border-radius: 6px; }
+.skin .swatch span { width: 14px; height: 14px; border-radius: 3px; }
+.skin-name { font-size: 13px; font-weight: 600; }
+.brand-btn { display: flex; align-items: center; gap: 6px; }
