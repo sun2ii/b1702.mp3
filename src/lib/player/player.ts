@@ -218,9 +218,6 @@ interface Persisted {
   position: number;
   shuffle: boolean;
   repeat: RepeatMode;
-  /** True while a source is fetching bytes (Drive download). */
-  loading: boolean;
-  error: string | null;
 }
 
 async function persist() {
