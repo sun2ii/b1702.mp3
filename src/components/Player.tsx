@@ -18,7 +18,7 @@ export function MiniPlayer({ onOpen }: { onOpen: () => void }) {
       {src ? <img className="art" src={src} alt="" /> : <div className="art">♪</div>}
       <div className="meta">
         <div className="t">{p.current.title}</div>
-        <div className="s">{p.current.artist}</div>
+        <div className="s">{p.loading ? 'Downloading…' : p.error ? p.error : p.current.artist}</div>
       </div>
       <button className="icon-btn" onClick={(e) => { e.stopPropagation(); void togglePlay(); }}>
         {p.playing ? <Pause /> : <Play />}
@@ -57,7 +57,7 @@ export function NowPlaying({ onClose }: { onClose: () => void }) {
 
       <div className="lcd">
         <span>{fmtTime(pos)}</span>
-        <span>{p.current.fileType.toUpperCase()}{p.playing ? ' ▶' : ' ❚❚'}</span>
+        <span>{p.loading ? 'DOWNLOADING' : p.current.fileType.toUpperCase()}{p.playing ? ' ▶' : ' ❚❚'}</span>
         <span>-{fmtTime(Math.max(0, p.duration - pos))}</span>
       </div>
       <input

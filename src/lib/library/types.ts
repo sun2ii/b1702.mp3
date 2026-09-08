@@ -7,8 +7,12 @@ export interface Track {
   id: string;
   /** Which MusicSource owns this track ("local" now, "gdrive" later). */
   sourceId: string;
-  /** File name inside Library/Music. For a Drive track this is the cached copy (or empty until cached). */
+  /** File name inside Library/Music. For a Drive track this is the cached copy ("" until cached). */
   fileName: string;
+  /** Drive file id, for sourceId "gdrive". */
+  remoteId?: string;
+  /** Original file name on Drive (used as the download name). */
+  remoteName?: string;
   title: string;
   artist: string;
   album: string;

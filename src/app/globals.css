@@ -36,6 +36,9 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .brand { font-family: var(--font-lcd); font-size: 13px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; }
 .import-btn { font-size: 13px; padding: 7px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--text); }
 .import-btn:disabled { opacity: 0.5; }
+.import-btn svg { width: 14px; height: 14px; fill: currentColor; vertical-align: -2px; }
+.header-actions { display: flex; gap: 6px; }
+.row .cloud svg { width: 18px; height: 18px; fill: var(--text-dim); }
 .tabs { display: flex; gap: 6px; padding: 0 16px 10px; }
 .tab { flex: 1; padding: 8px 0; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text-dim); background: var(--panel); border: 1px solid var(--line); }
 .tab.active { color: var(--bg); background: var(--accent); border-color: var(--accent); }

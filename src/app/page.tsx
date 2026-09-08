@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { bootLibrary, importFromFiles, libraryStore } from '@/lib/library/library';
+import { bootLibrary, importFromFiles, libraryStore, syncDrive } from '@/lib/library/library';
+import { Cloud } from '@/components/Icons';
 import { useStore } from '@/lib/store-util';
 import { LibraryView, type Tab } from '@/components/LibraryView';
 import { MiniPlayer, NowPlaying } from '@/components/Player';
@@ -19,9 +20,14 @@ export default function Home() {
     <div className="app">
       <header className="header">
         <span className="brand">Winamp</span>
-        <button className="import-btn" disabled={lib.importing} onClick={() => void importFromFiles()}>
-          {lib.importing ? 'Importing…' : '+ Import'}
-        </button>
+        <div className="header-actions">
+          <button className="import-btn" disabled={lib.driveSyncing} onClick={() => void syncDrive()}>
+            <Cloud /> {lib.driveSyncing ? 'Syncing…' : lib.driveSignedIn ? 'Sync' : 'Drive'}
+          </button>
+          <button className="import-btn" disabled={lib.importing} onClick={() => void importFromFiles()}>
+            {lib.importing ? 'Importing…' : '+ Import'}
+          </button>
+        </div>
       </header>
 
       <nav className="tabs">
@@ -37,7 +43,7 @@ export default function Home() {
       {lib.ready && lib.tracks.length === 0 ? (
         <div className="empty">
           <span className="brand">Library empty</span>
-          Tap <b>+ Import</b> and pick MP3 or M4A files from the Files app.
+          Tap <b>Drive</b> to sync your Google Drive library,<br />or <b>+ Import</b> to pick files from the Files app.
         </div>
       ) : (
         <LibraryView key={tab} tracks={lib.tracks} tab={tab} />

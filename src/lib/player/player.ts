@@ -1,6 +1,7 @@
 import { Preferences } from '@capacitor/preferences';
 import { AudioEngine } from '../native/audio-engine';
 import { localSource } from '../library/local-source';
+import { driveSource } from '../drive/drive-source';
 import type { MusicSource, Track } from '../library/types';
 import { createStore } from '../store-util';
 
@@ -19,6 +20,9 @@ export interface PlayerState {
   duration: number;
   shuffle: boolean;
   repeat: RepeatMode;
+  /** True while a source is fetching bytes (Drive download). */
+  loading: boolean;
+  error: string | null;
 }
 
 export const playerStore = createStore<PlayerState>({
@@ -31,10 +35,15 @@ export const playerStore = createStore<PlayerState>({
   duration: 0,
   shuffle: false,
   repeat: 'off',
+  loading: false,
+  error: null,
 });
 
 /** Where a track's bytes come from. Add GoogleDriveSource here later; nothing else changes. */
-const sources: Record<string, MusicSource> = { [localSource.id]: localSource };
+const sources: Record<string, MusicSource> = {
+  [localSource.id]: localSource,
+  [driveSource.id]: driveSource,
+};
 
 const PREFS_KEY = 'player-state-v1';
 const PREV_RESTART_THRESHOLD = 3; // seconds: "previous" restarts the song after this
@@ -148,11 +157,17 @@ async function loadCurrent(autoplay: boolean) {
   const track = queue[order[cursor]];
   if (!track) return;
 
-  // The one line that makes Google Drive possible later: resolve bytes via the source.
+  // Resolve bytes via the source: local = instant, Drive = download first.
   const source = sources[track.sourceId] ?? localSource;
-  const fileName = await source.ensureLocal(track);
-
-  playerStore.set({ current: track, position: 0, duration: track.duration });
+  playerStore.set({ current: track, position: 0, duration: track.duration, loading: true, error: null });
+  let fileName: string;
+  try {
+    fileName = await source.ensureLocal(track);
+  } catch (e) {
+    playerStore.set({ loading: false, error: (e as Error).message });
+    return;
+  }
+  playerStore.set({ loading: false });
   await AudioEngine.loadTrack({
     fileName,
     title: track.title,
@@ -203,6 +218,9 @@ interface Persisted {
   position: number;
   shuffle: boolean;
   repeat: RepeatMode;
+  /** True while a source is fetching bytes (Drive download). */
+  loading: boolean;
+  error: string | null;
 }
 
 async function persist() {

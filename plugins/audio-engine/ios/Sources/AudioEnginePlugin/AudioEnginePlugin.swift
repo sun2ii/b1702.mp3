@@ -14,6 +14,7 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "pause", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "seek", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getState", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "downloadFile", returnType: CAPPluginReturnPromise),
     ]
 
     private let engine = AudioEngine()
@@ -35,6 +36,22 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
                 call.resolve(track)
             } catch {
                 call.reject("Import failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @objc func downloadFile(_ call: CAPPluginCall) {
+        guard let urlString = call.getString("url"), let url = URL(string: urlString),
+              let fileName = call.getString("fileName") else {
+            call.reject("url and fileName are required"); return
+        }
+        let auth = call.getString("authorization")
+        Task {
+            do {
+                let dest = try await Downloader.download(url: url, authorization: auth, fileName: fileName)
+                call.resolve(["path": dest.absoluteString])
+            } catch {
+                call.reject(error.localizedDescription)
             }
         }
     }

@@ -23,6 +23,8 @@ export interface AudioEnginePlugin {
   pause(): Promise<EngineState>;
   seek(opts: { position: number }): Promise<EngineState>;
   getState(): Promise<EngineState>;
+  /** Download to a temp file (streams to disk). Feed the result to importFile(). */
+  downloadFile(opts: { url: string; authorization?: string; fileName: string }): Promise<{ path: string }>;
 
   addListener(event: 'state', fn: (s: EngineState) => void): Promise<PluginListenerHandle>;
   addListener(event: 'ended', fn: () => void): Promise<PluginListenerHandle>;
