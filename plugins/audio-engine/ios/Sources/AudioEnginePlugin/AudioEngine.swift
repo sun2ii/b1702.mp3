@@ -28,6 +28,8 @@ final class AudioEngine {
     }
     static var musicDir: URL { libraryDir.appendingPathComponent("Music", isDirectory: true) }
     static var artworkDir: URL { libraryDir.appendingPathComponent("Artwork", isDirectory: true) }
+    /// Written by the web layer on boot from the bundled cover; used wherever a track has no art.
+    static var defaultArtwork: URL { artworkDir.appendingPathComponent("_default.jpg") }
 
     // MARK: - State
 
@@ -138,8 +140,8 @@ final class AudioEngine {
             MPNowPlayingInfoPropertyElapsedPlaybackTime: position,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
         ]
-        if let name = meta.artworkFileName,
-           let image = UIImage(contentsOfFile: Self.artworkDir.appendingPathComponent(name).path) {
+        let artPath = meta.artworkFileName.map { Self.artworkDir.appendingPathComponent($0).path } ?? Self.defaultArtwork.path
+        if let image = UIImage(contentsOfFile: artPath) ?? UIImage(contentsOfFile: Self.defaultArtwork.path) {
             info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info

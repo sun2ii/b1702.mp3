@@ -19,7 +19,7 @@ export function fmtTime(s: number) {
 function Art({ track, big }: { track?: { artworkFileName?: string }; big?: boolean }) {
   const src = artworkSrc(track);
   const cls = `art${big ? ' big' : ''}`;
-  return src ? <img className={cls} src={src} alt="" /> : <div className={cls}>♪</div>;
+  return <img className={cls} src={src} alt="" />;
 }
 
 function TrackRow({ t, context, showNumber }: { t: Track; context: Track[]; showNumber?: boolean }) {

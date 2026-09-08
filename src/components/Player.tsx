@@ -34,7 +34,7 @@ export function MiniPlayer({ onOpen }: { onOpen: () => void }) {
   const pct = p.duration ? (p.position / p.duration) * 100 : 0;
   return (
     <div className="mini" onClick={onOpen}>
-      {src ? <img className="art" src={src} alt="" /> : <div className="art">♪</div>}
+      <img className="art" src={src} alt="" />
       <div className="meta">
         <div className="t">{p.current.title}</div>
         <div className="s">{p.loading ? 'Downloading…' : p.error ? p.error : p.current.artist}</div>
@@ -68,7 +68,7 @@ export function NowPlaying({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="np-art">
-        {src ? <img src={src} alt="" /> : <div className="ph">♪</div>}
+        <img src={src} alt="" />
       </div>
 
       <div className="np-title">{p.current.title}</div>

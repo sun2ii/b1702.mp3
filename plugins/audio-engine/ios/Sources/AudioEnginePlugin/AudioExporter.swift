@@ -33,12 +33,22 @@ enum AudioExporter {
             item.extendedLanguageTag = "und"
             return item
         }
-        export.metadata = [
+        var metadata = [
             tag(.commonIdentifierTitle, title),
             tag(.commonIdentifierArtist, artist),
             tag(.commonIdentifierAlbumName, album),
             tag(.commonIdentifierCreationDate, recordedAt),
         ].compactMap { $0 }
+        // Cover art: embed the default cover so the file carries it into Drive and any other player.
+        if let art = try? Data(contentsOf: AudioEngine.defaultArtwork) {
+            let item = AVMutableMetadataItem()
+            item.identifier = .commonIdentifierArtwork
+            item.value = art as NSData
+            item.dataType = kCMMetadataBaseDataType_JPEG as String
+            item.extendedLanguageTag = "und"
+            metadata.append(item)
+        }
+        export.metadata = metadata
 
         export.outputURL = dest
         export.outputFileType = .m4a

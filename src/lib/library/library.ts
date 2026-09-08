@@ -4,7 +4,7 @@ import { askTrackInfo } from '../prompt';
 import { AudioEngine } from '../native/audio-engine';
 import { createStore } from '../store-util';
 import { localSource } from './local-source';
-import { loadLibrary, resolveLibraryUri, saveLibrary } from './library-store';
+import { installDefaultCover, loadLibrary, resolveLibraryUri, saveLibrary } from './library-store';
 import type { Track } from './types';
 import { initPlayer, removeFromQueue } from '../player/player';
 import { driveSource } from '../drive/drive-source';
@@ -29,6 +29,7 @@ export const libraryStore = createStore<LibraryState>({
 /** App boot: read the index, resolve the artwork base URL, then let the player restore itself. */
 export async function bootLibrary() {
   await resolveLibraryUri();
+  await installDefaultCover();
   const tracks = await loadLibrary();
   libraryStore.set({ tracks, ready: true });
 
