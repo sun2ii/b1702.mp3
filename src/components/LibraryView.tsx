@@ -23,11 +23,12 @@ function Art({ track, big }: { track?: { artworkFileName?: string }; big?: boole
   return <img className={cls} src={src} alt="" />;
 }
 
-function TrackRow({ t, context, showNumber }: { t: Track; context: Track[]; showNumber?: boolean }) {
+function TrackRow({ t, context, showNumber, index }: { t: Track; context: Track[]; showNumber?: boolean; index?: number }) {
   const { current } = useStore(playerStore);
+  const num = showNumber ? (t.trackNumber ?? '–') : index;
   return (
     <button className={`row${current?.id === t.id ? ' current' : ''}`} onClick={() => void playTrack(t, context)}>
-      {showNumber ? <span className="num">{t.trackNumber ?? '–'}</span> : <Art track={t} />}
+      {num != null ? <span className="num">{num}</span> : <Art track={t} />}
       <div className="meta">
         <div className="t">{t.title}</div>
         <div className="s">{t.artist}{!showNumber && ` · ${t.album}`}</div>
@@ -95,7 +96,7 @@ export function LibraryView({ tracks: all, tab, query = '' }: { tracks: Track[];
   if (tab === 'songs') {
     return (
       <div className="scroll">
-        {songs.map((t) => <TrackRow key={t.id} t={t} context={songs} />)}
+        {songs.map((t, i) => <TrackRow key={t.id} t={t} context={songs} index={i + 1} />)}
       </div>
     );
   }

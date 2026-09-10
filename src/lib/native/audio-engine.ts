@@ -18,6 +18,7 @@ export interface AudioEnginePlugin {
     artist: string;
     album: string;
     artworkFileName?: string;
+    duration?: number;
   }): Promise<EngineState>;
   play(): Promise<EngineState>;
   pause(): Promise<EngineState>;

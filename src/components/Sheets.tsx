@@ -5,6 +5,21 @@ import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { promptStore } from '@/lib/prompt';
 import { useStore } from '@/lib/store-util';
 
+/** Auto-capitalize each word as user types (Title Case). */
+function titleCase(prev: string, next: string): string {
+  // Only transform if user is typing forward (not deleting)
+  if (next.length <= prev.length) return next;
+  // Capitalize after start or space
+  const added = next.slice(prev.length);
+  if (added.length === 1 && /[a-z]/.test(added)) {
+    const before = next.slice(0, -1);
+    if (before.length === 0 || before.endsWith(' ')) {
+      return before + added.toUpperCase();
+    }
+  }
+  return next;
+}
+
 /** Bottom sheets: name/edit a track or album, and confirm deletes. Driven by promptStore. */
 export function Sheets() {
   const { pending } = useStore(promptStore);
@@ -61,15 +76,15 @@ export function Sheets() {
         <div className="sheet-title">{pending.heading}</div>
         {show('title') && (
           <label className="field"><span>Title</span>
-            <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Song name" /></label>
+            <input autoFocus value={title} onChange={(e) => setTitle(titleCase(title, e.target.value))} placeholder="Song name" /></label>
         )}
         {show('artist') && (
           <label className="field"><span>Artist</span>
-            <input value={artist} onChange={(e) => setArtist(e.target.value)} placeholder="Artist" /></label>
+            <input value={artist} onChange={(e) => setArtist(titleCase(artist, e.target.value))} placeholder="Artist" /></label>
         )}
         {show('album') && (
           <label className="field"><span>Album</span>
-            <input autoFocus={!show('title')} value={album} onChange={(e) => setAlbum(e.target.value)} placeholder="Album" /></label>
+            <input autoFocus={!show('title')} value={album} onChange={(e) => setAlbum(titleCase(album, e.target.value))} placeholder="Album" /></label>
         )}
         {pending.allowCover && (
           <button className="import-btn" onClick={() => void pickCover()}>

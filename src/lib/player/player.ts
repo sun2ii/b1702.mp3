@@ -174,6 +174,7 @@ async function loadCurrent(autoplay: boolean) {
     artist: track.artist,
     album: track.album,
     artworkFileName: track.artworkFileName,
+    duration: track.duration,
   });
   if (autoplay) await AudioEngine.play();
   await persist();

@@ -9,6 +9,7 @@ struct NowPlayingMeta {
     let artist: String
     let album: String
     let artworkFileName: String?
+    let duration: Double
 }
 
 /// The audio engine. Owns exactly one AVPlayer and everything iOS needs to keep it
@@ -139,11 +140,13 @@ final class AudioEngine {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
             return
         }
+        // Use metadata duration (known upfront) since AVPlayer duration may not be ready yet
+        let dur = meta.duration > 0 ? meta.duration : duration
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: meta.title,
             MPMediaItemPropertyArtist: meta.artist,
             MPMediaItemPropertyAlbumTitle: meta.album,
-            MPMediaItemPropertyPlaybackDuration: duration,
+            MPMediaItemPropertyPlaybackDuration: dur,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: position,
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
         ]

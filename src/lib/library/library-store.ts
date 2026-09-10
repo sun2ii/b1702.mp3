@@ -111,17 +111,21 @@ export function groupAlbums(tracks: Track[]): Album[] {
 }
 
 export function groupArtists(tracks: Track[]): Artist[] {
-  const albums = groupAlbums(tracks);
+  // Group by track artist (not album artist) so each artist appears even if their
+  // songs are scattered across compilation albums or "Unknown Album".
   const map = new Map<string, Artist>();
-  for (const a of albums) {
-    const key = norm(a.artist);
+  for (const t of tracks) {
+    const key = norm(t.artist);
     let artist = map.get(key);
     if (!artist) {
-      artist = { name: a.artist, tracks: [], albums: [] };
+      artist = { name: t.artist.trim(), tracks: [], albums: [] };
       map.set(key, artist);
     }
-    artist.albums.push(a);
-    artist.tracks.push(...a.tracks);
+    artist.tracks.push(t);
+  }
+  // Build albums per artist from their tracks
+  for (const artist of map.values()) {
+    artist.albums = groupAlbums(artist.tracks);
   }
   return [...map.values()].sort((a, b) => collator.compare(a.name, b.name));
 }

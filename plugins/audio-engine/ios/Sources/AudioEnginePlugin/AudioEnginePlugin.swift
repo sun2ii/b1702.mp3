@@ -127,7 +127,8 @@ public class AudioEnginePlugin: CAPPlugin, CAPBridgedPlugin {
             title: call.getString("title") ?? fileName,
             artist: call.getString("artist") ?? "",
             album: call.getString("album") ?? "",
-            artworkFileName: call.getString("artworkFileName")
+            artworkFileName: call.getString("artworkFileName"),
+            duration: call.getDouble("duration") ?? 0
         )
         DispatchQueue.main.async {
             self.engine.load(fileName: fileName, meta: meta)
